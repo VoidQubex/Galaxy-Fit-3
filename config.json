@@ -1,0 +1,550 @@
+{
+  "page_size": 12,
+  "quick_replies": [
+    {
+      "label": "Firefox",
+      "launch": "zen"
+    },
+    {
+      "label": "YouTube",
+      "shell": "start \"\" \"https://www.youtube.com/\""
+    },
+    {
+      "label": "Explorer",
+      "launch": "explorer.exe"
+    },
+    {
+      "label": "VS Code",
+      "launch": "code"
+    },
+    {
+      "label": "Minecraft",
+      "launch": "C:\\Users\\Ayan\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\SKlauncher.lnk"
+    },
+    {
+      "label": "Fetch",
+      "run": "fetch_homeassistant"
+    },
+    {
+      "label": "Shutdown",
+      "shell": "shutdown /s /t 0"
+    },
+    {
+      "label": "Lock",
+      "shell": "rundll32.exe user32.dll,LockWorkStation"
+    },
+    {
+      "label": "Sleep",
+      "shell": "rundll32.exe powrprof.dll, SetSuspendState Sleep"
+    },
+    {
+      "label": "Mouse",
+      "menu": "mouse"
+    },
+    {
+      "label": "Keyboard",
+      "menu": "keyboard"
+    }
+  ],
+  "actions": [
+    {
+      "channel": "0x09",
+      "msg": 4,
+      "run": "media_playpause"
+    },
+    {
+      "channel": "0x07",
+      "msg": 4,
+      "run": "action_center"
+    },
+    {
+      "channel": "0x1a",
+      "msg": 0,
+      "shell": "code \"F:\\too many gigabytes\\Projects\\Galaxy Fit 3\\config.json\""
+    }
+  ],
+  "menus": {
+    "mouse": {
+      "page_size": 9,
+      "buttons": [
+        {
+          "label": "Up",
+          "run": "mouse_move",
+          "args": {
+            "dy": -40
+          }
+        },
+        {
+          "label": "Down",
+          "run": "mouse_move",
+          "args": {
+            "dy": 40
+          }
+        },
+        {
+          "label": "Left",
+          "run": "mouse_move",
+          "args": {
+            "dx": -40
+          }
+        },
+        {
+          "label": "Right",
+          "run": "mouse_move",
+          "args": {
+            "dx": 40
+          }
+        },
+        {
+          "label": "Click",
+          "run": "mouse_click",
+          "args": {
+            "button": "left"
+          }
+        },
+        {
+          "label": "Double",
+          "run": "mouse_click",
+          "args": {
+            "button": "left",
+            "double": true
+          }
+        },
+        {
+          "label": "Right Click",
+          "run": "mouse_click",
+          "args": {
+            "button": "right"
+          }
+        },
+        {
+          "label": "Big Up",
+          "run": "mouse_move",
+          "args": {
+            "dy": -150
+          }
+        },
+        {
+          "label": "Big Down",
+          "run": "mouse_move",
+          "args": {
+            "dy": 150
+          }
+        },
+        {
+          "label": "Big Left",
+          "run": "mouse_move",
+          "args": {
+            "dx": -150
+          }
+        },
+        {
+          "label": "Big Right",
+          "run": "mouse_move",
+          "args": {
+            "dx": 150
+          }
+        },
+        {
+          "label": "Scroll Up",
+          "run": "mouse_scroll",
+          "args": {
+            "amount": 3
+          }
+        },
+        {
+          "label": "Scroll Down",
+          "run": "mouse_scroll",
+          "args": {
+            "amount": -3
+          }
+        },
+        {
+          "label": "Back",
+          "menu": ""
+        }
+      ]
+    },
+    "keyboard": {
+      "page_size": 9,
+      "buttons": [
+        {
+          "label": "a",
+          "run": "type",
+          "args": {
+            "text": "a"
+          }
+        },
+        {
+          "label": "b",
+          "run": "type",
+          "args": {
+            "text": "b"
+          }
+        },
+        {
+          "label": "c",
+          "run": "type",
+          "args": {
+            "text": "c"
+          }
+        },
+        {
+          "label": "d",
+          "run": "type",
+          "args": {
+            "text": "d"
+          }
+        },
+        {
+          "label": "e",
+          "run": "type",
+          "args": {
+            "text": "e"
+          }
+        },
+        {
+          "label": "f",
+          "run": "type",
+          "args": {
+            "text": "f"
+          }
+        },
+        {
+          "label": "g",
+          "run": "type",
+          "args": {
+            "text": "g"
+          }
+        },
+        {
+          "label": "h",
+          "run": "type",
+          "args": {
+            "text": "h"
+          }
+        },
+        {
+          "label": "i",
+          "run": "type",
+          "args": {
+            "text": "i"
+          }
+        },
+        {
+          "label": "j",
+          "run": "type",
+          "args": {
+            "text": "j"
+          }
+        },
+        {
+          "label": "k",
+          "run": "type",
+          "args": {
+            "text": "k"
+          }
+        },
+        {
+          "label": "l",
+          "run": "type",
+          "args": {
+            "text": "l"
+          }
+        },
+        {
+          "label": "m",
+          "run": "type",
+          "args": {
+            "text": "m"
+          }
+        },
+        {
+          "label": "n",
+          "run": "type",
+          "args": {
+            "text": "n"
+          }
+        },
+        {
+          "label": "o",
+          "run": "type",
+          "args": {
+            "text": "o"
+          }
+        },
+        {
+          "label": "p",
+          "run": "type",
+          "args": {
+            "text": "p"
+          }
+        },
+        {
+          "label": "q",
+          "run": "type",
+          "args": {
+            "text": "q"
+          }
+        },
+        {
+          "label": "r",
+          "run": "type",
+          "args": {
+            "text": "r"
+          }
+        },
+        {
+          "label": "s",
+          "run": "type",
+          "args": {
+            "text": "s"
+          }
+        },
+        {
+          "label": "t",
+          "run": "type",
+          "args": {
+            "text": "t"
+          }
+        },
+        {
+          "label": "u",
+          "run": "type",
+          "args": {
+            "text": "u"
+          }
+        },
+        {
+          "label": "v",
+          "run": "type",
+          "args": {
+            "text": "v"
+          }
+        },
+        {
+          "label": "w",
+          "run": "type",
+          "args": {
+            "text": "w"
+          }
+        },
+        {
+          "label": "x",
+          "run": "type",
+          "args": {
+            "text": "x"
+          }
+        },
+        {
+          "label": "y",
+          "run": "type",
+          "args": {
+            "text": "y"
+          }
+        },
+        {
+          "label": "z",
+          "run": "type",
+          "args": {
+            "text": "z"
+          }
+        },
+        {
+          "label": "0",
+          "run": "type",
+          "args": {
+            "text": "0"
+          }
+        },
+        {
+          "label": "1",
+          "run": "type",
+          "args": {
+            "text": "1"
+          }
+        },
+        {
+          "label": "2",
+          "run": "type",
+          "args": {
+            "text": "2"
+          }
+        },
+        {
+          "label": "3",
+          "run": "type",
+          "args": {
+            "text": "3"
+          }
+        },
+        {
+          "label": "4",
+          "run": "type",
+          "args": {
+            "text": "4"
+          }
+        },
+        {
+          "label": "5",
+          "run": "type",
+          "args": {
+            "text": "5"
+          }
+        },
+        {
+          "label": "6",
+          "run": "type",
+          "args": {
+            "text": "6"
+          }
+        },
+        {
+          "label": "7",
+          "run": "type",
+          "args": {
+            "text": "7"
+          }
+        },
+        {
+          "label": "8",
+          "run": "type",
+          "args": {
+            "text": "8"
+          }
+        },
+        {
+          "label": "9",
+          "run": "type",
+          "args": {
+            "text": "9"
+          }
+        },
+        {
+          "label": "Space",
+          "run": "key",
+          "args": {
+            "key": "space"
+          }
+        },
+        {
+          "label": "Enter",
+          "run": "key",
+          "args": {
+            "key": "enter"
+          }
+        },
+        {
+          "label": "Backspace",
+          "run": "key",
+          "args": {
+            "key": "backspace"
+          }
+        },
+        {
+          "label": "Tab",
+          "run": "key",
+          "args": {
+            "key": "tab"
+          }
+        },
+        {
+          "label": "Esc",
+          "run": "key",
+          "args": {
+            "key": "esc"
+          }
+        },
+        {
+          "label": "Del",
+          "run": "key",
+          "args": {
+            "key": "delete"
+          }
+        },
+        {
+          "label": "Up",
+          "run": "key",
+          "args": {
+            "key": "up"
+          }
+        },
+        {
+          "label": "Down",
+          "run": "key",
+          "args": {
+            "key": "down"
+          }
+        },
+        {
+          "label": "Left",
+          "run": "key",
+          "args": {
+            "key": "left"
+          }
+        },
+        {
+          "label": "Right",
+          "run": "key",
+          "args": {
+            "key": "right"
+          }
+        },
+        {
+          "label": "Copy",
+          "run": "key",
+          "args": {
+            "key": "c",
+            "mods": [
+              "ctrl"
+            ]
+          }
+        },
+        {
+          "label": "Paste",
+          "run": "key",
+          "args": {
+            "key": "v",
+            "mods": [
+              "ctrl"
+            ]
+          }
+        },
+        {
+          "label": "Cut",
+          "run": "key",
+          "args": {
+            "key": "x",
+            "mods": [
+              "ctrl"
+            ]
+          }
+        },
+        {
+          "label": "Undo",
+          "run": "key",
+          "args": {
+            "key": "z",
+            "mods": [
+              "ctrl"
+            ]
+          }
+        },
+        {
+          "label": "Select All",
+          "run": "key",
+          "args": {
+            "key": "a",
+            "mods": [
+              "ctrl"
+            ]
+          }
+        },
+        {
+          "label": "Back",
+          "menu": ""
+        }
+      ]
+    }
+  }
+}

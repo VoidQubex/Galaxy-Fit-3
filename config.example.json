@@ -1,0 +1,33 @@
+{
+  "//": "Band button config. Copy this to config.json and edit. Each entry has a",
+  "//1": "label/channel+msg plus EXACTLY ONE action of:",
+  "//2": "  launch : app name or absolute path, started detached (like double-click)",
+  "//3": "  shell  : a raw command line, run detached",
+  "//4": "  run    : name of a Python function registered with @register in actions.py",
+  "//5": "Built-in run names: shutdown, media_playpause, action_center, fetch_homeassistant",
+  "//6": "A 'when' condition (one of time/random/predicate) makes buttons appear only",
+  "//7": "  when it's true; no 'when' = always shown, re-checked each launcher arm.",
+  "//8": "Put 'when' on a single button, OR on a GROUP { when, buttons:[...] } to share",
+  "//9": "  it across many. Groups nest; a button's own 'when' ANDs with its group's.",
+
+  "quick_replies": [
+    { "label": "Firefox",  "launch": "firefox" },
+    { "label": "YouTube",  "shell": "start \"\" \"https://www.youtube.com/\"" },
+    { "label": "Explorer", "launch": "explorer.exe" },
+    { "label": "Fetch",    "run": "fetch_homeassistant" },
+
+    { "when": { "time": { "from": "09:00", "to": "18:00" } },
+      "buttons": [
+        { "label": "VS Code", "launch": "code" },
+        { "label": "Slack",   "launch": "slack" }
+      ] },
+
+    { "label": "Surprise", "launch": "firefox", "when": { "random": 0.25 } }
+  ],
+
+  "actions": [
+    { "channel": "0x1a", "msg": 0, "run": "shutdown" },
+    { "channel": "0x09", "msg": 4, "run": "media_playpause" },
+    { "channel": "0x07", "msg": 4, "run": "action_center", "debounce": 0 }
+  ]
+}

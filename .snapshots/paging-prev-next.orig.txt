@@ -1,0 +1,33 @@
+# Snapshot: hierarchical paging revert snippets
+# Restore by putting these blocks back into actions.py / server.py
+# (taken before replacing Prev/Next linear paging with index → leaf + Back).
+#
+# Also revert config.json: remove the top-level "page_size": 12 line
+# (added so the root launcher stays flat with 11 buttons).
+#
+# --- actions.py (menus & paging section, approx lines 439-500) ---
+#
+# PAGE_PREV = "< Prev"
+# PAGE_NEXT = "Next >"
+# DEFAULT_PAGE_SIZE = 9
+#
+# def menu_labels(menu: str = "", page: int = 0, ctx=None):
+#     ...
+#     per = max(1, size - 2)                     # two slots reserved for Prev/Next
+#     total = (len(visible) + per - 1) // per
+#     page = page % total                        # wrap, so no dead buttons
+#     chunk = visible[page * per:(page + 1) * per]
+#     return chunk + [PAGE_PREV, PAGE_NEXT], page, total
+#
+# --- server.py (send_launcher body line + MSG_NOTI_ACTION paging) ---
+#
+# body = LAUNCHER_BODY if total == 1 else f"Page {page + 1}/{total}"
+# ...
+# if text in (actions_mod.PAGE_PREV, actions_mod.PAGE_NEXT):
+#     self.current_page += 1 if text == actions_mod.PAGE_NEXT else -1
+#     print(f"[{ts()}]   -> page {self.current_page}")
+# else:
+#     action = actions_mod.menu_action(...)
+#     if isinstance(action, tuple) and action and action[0] == "__menu__":
+#         ...
+#         self.current_menu, self.current_page = target, 0

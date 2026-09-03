@@ -1,0 +1,15 @@
+# BLE + the WinRT bindings it pulls in (Bluetooth, GATT, storage streams)
+bleak[winrt]>=0.21.0
+
+# Now-playing (media.py) and Windows toast reading (winnoti.py)
+winrt-Windows.Media.Control>=3.2.1
+winrt-Windows.UI.Notifications>=3.2.1
+winrt-Windows.UI.Notifications.Management>=3.2.1
+winrt-Windows.ApplicationModel>=3.2.1
+
+# Icon rendering / animation frames (icons.py) and album-art scaling
+Pillow>=10.0
+
+# Windows master volume (volume.py)
+pycaw>=20240210
+comtypes>=1.2

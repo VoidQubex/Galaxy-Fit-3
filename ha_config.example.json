@@ -1,0 +1,10 @@
+{
+  "url": "http://homeassistant.local:8123",
+  "token": "PASTE_YOUR_LONG_LIVED_ACCESS_TOKEN_HERE",
+  "title": "Home",
+  "entities": [
+    { "entity_id": "sensor.living_room_temperature", "label": "Living Room" },
+    { "entity_id": "sensor.outdoor_temperature",     "label": "Outdoor" },
+    { "entity_id": "sensor.cpu_temperature",         "label": "CPU" }
+  ]
+}
