@@ -2,7 +2,7 @@
   "page_size": 12,
   "quick_replies": [
     {
-      "label": "Firefox",
+      "label": "Zen",
       "launch": "zen"
     },
     {
@@ -65,99 +65,116 @@
   ],
   "menus": {
     "mouse": {
-      "page_size": 9,
+      "page_size": 10,
       "buttons": [
         {
-          "label": "Up",
-          "run": "mouse_move",
-          "args": {
-            "dy": -40
-          }
+          "label": "Nudge",
+          "buttons": [
+            {
+              "label": "Up",
+              "run": "mouse_move",
+              "args": {
+                "dy": -40
+              }
+            },
+            {
+              "label": "Down",
+              "run": "mouse_move",
+              "args": {
+                "dy": 40
+              }
+            },
+            {
+              "label": "Left",
+              "run": "mouse_move",
+              "args": {
+                "dx": -40
+              }
+            },
+            {
+              "label": "Right",
+              "run": "mouse_move",
+              "args": {
+                "dx": 40
+              }
+            },
+            {
+              "label": "Click",
+              "run": "mouse_click",
+              "args": {
+                "button": "left"
+              }
+            },
+            {
+              "label": "Double",
+              "run": "mouse_click",
+              "args": {
+                "button": "left",
+                "double": true
+              }
+            },
+            {
+              "label": "Right Click",
+              "run": "mouse_click",
+              "args": {
+                "button": "right"
+              }
+            },
+            {
+              "label": "Scroll Up",
+              "run": "mouse_scroll",
+              "args": {
+                "amount": 3
+              }
+            },
+            {
+              "label": "Scroll Down",
+              "run": "mouse_scroll",
+              "args": {
+                "amount": -3
+              }
+            }
+          ]
         },
         {
-          "label": "Down",
-          "run": "mouse_move",
-          "args": {
-            "dy": 40
-          }
-        },
-        {
-          "label": "Left",
-          "run": "mouse_move",
-          "args": {
-            "dx": -40
-          }
-        },
-        {
-          "label": "Right",
-          "run": "mouse_move",
-          "args": {
-            "dx": 40
-          }
-        },
-        {
-          "label": "Click",
-          "run": "mouse_click",
-          "args": {
-            "button": "left"
-          }
-        },
-        {
-          "label": "Double",
-          "run": "mouse_click",
-          "args": {
-            "button": "left",
-            "double": true
-          }
-        },
-        {
-          "label": "Right Click",
-          "run": "mouse_click",
-          "args": {
-            "button": "right"
-          }
-        },
-        {
-          "label": "Big Up",
-          "run": "mouse_move",
-          "args": {
-            "dy": -150
-          }
-        },
-        {
-          "label": "Big Down",
-          "run": "mouse_move",
-          "args": {
-            "dy": 150
-          }
-        },
-        {
-          "label": "Big Left",
-          "run": "mouse_move",
-          "args": {
-            "dx": -150
-          }
-        },
-        {
-          "label": "Big Right",
-          "run": "mouse_move",
-          "args": {
-            "dx": 150
-          }
-        },
-        {
-          "label": "Scroll Up",
-          "run": "mouse_scroll",
-          "args": {
-            "amount": 3
-          }
-        },
-        {
-          "label": "Scroll Down",
-          "run": "mouse_scroll",
-          "args": {
-            "amount": -3
-          }
+          "label": "Big",
+          "buttons": [
+            {
+              "label": "Big Up",
+              "run": "mouse_move",
+              "args": {
+                "dy": -150
+              }
+            },
+            {
+              "label": "Big Down",
+              "run": "mouse_move",
+              "args": {
+                "dy": 150
+              }
+            },
+            {
+              "label": "Big Left",
+              "run": "mouse_move",
+              "args": {
+                "dx": -150
+              }
+            },
+            {
+              "label": "Big Right",
+              "run": "mouse_move",
+              "args": {
+                "dx": 150
+              }
+            },
+            {
+              "label": "Click",
+              "run": "mouse_click",
+              "args": {
+                "button": "left"
+              }
+            }
+          ]
         },
         {
           "label": "Back",

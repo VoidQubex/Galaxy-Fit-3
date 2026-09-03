@@ -456,27 +456,88 @@ _SUMMARY_MAX = 8            # band button text is short; truncate ends of ranges
 
 
 def _load_menus(cfg):
-    """Return {name: {"entries": [(label, cond)], "actions": {label: action},
-    "page_size": int}}. Root menu is "" and comes from `quick_replies`."""
+    """Return {name: {"entries", "actions", "page_size", "pages"}}.
+
+    `pages` is None for auto-chunked menus, or a list of
+    {"title": str, "entries": [(label, cond), ...]} when the config uses labeled
+    page groups: { "label": "Nudge", "buttons": [ ... ] }.
+    A group with `buttons` but no `label` is still a conditional flatten (when).
+    """
     menus = {}
     root_entries, root_actions = [], {}
     _walk_quick_replies(cfg.get("quick_replies", []), None, "quick_replies",
                         root_entries, root_actions)
     menus[""] = {"entries": root_entries, "actions": root_actions,
-                 "page_size": int(cfg.get("page_size", DEFAULT_PAGE_SIZE))}
+                 "page_size": int(cfg.get("page_size", DEFAULT_PAGE_SIZE)),
+                 "pages": None}
 
     for name, spec in (cfg.get("menus") or {}).items():
         if not isinstance(spec, dict):
             print(f"[config] menus.{name}: must be an object - skipped")
             continue
-        entries, acts = [], {}
-        _walk_quick_replies(spec.get("buttons", []), None, f"menus.{name}.buttons",
-                            entries, acts)
+        entries, acts, pages = _load_menu_buttons(
+            spec.get("buttons", []), f"menus.{name}.buttons")
         menus[str(name)] = {
-            "entries": entries, "actions": acts,
+            "entries": entries, "actions": acts, "pages": pages,
             "page_size": int(spec.get("page_size", cfg.get("page_size", DEFAULT_PAGE_SIZE))),
         }
     return menus
+
+
+def _load_menu_buttons(buttons, where):
+    """Walk one menu's buttons; detect labeled page groups vs flat lists.
+
+    Returns (entries, actions, pages) where pages is None (auto-chunk) or a list
+    of {"title", "entries"} for explicit index leaves. Duplicate labels (e.g.
+    Click on two pages) are allowed - both show; actions keep one mapping.
+    """
+    entries, acts, pages = [], {}, []
+    loose = []  # top-level buttons outside any labeled page
+    for i, entry in enumerate(buttons or []):
+        here = f"{where}[{i}]"
+        if not isinstance(entry, dict):
+            print(f"[config] {here}: expected an object - skipped")
+            continue
+        if "buttons" in entry and entry.get("label"):
+            page_entries, page_acts = [], {}
+            group_cond = _compile_condition(entry.get("when"), f"{here} (page)")
+            _walk_quick_replies(entry["buttons"], group_cond, f"{here}.buttons",
+                                page_entries, page_acts)
+            pages.append({"title": str(entry["label"]), "entries": page_entries})
+            entries.extend(page_entries)
+            acts.update(page_acts)
+            continue
+        if "buttons" in entry:
+            # Conditional group (no label) - flatten into the loose list.
+            group_cond = _compile_condition(entry.get("when"), f"{here} (group)")
+            _walk_quick_replies(entry["buttons"], group_cond, f"{here}.buttons",
+                                loose, acts)
+            continue
+        # Single top-level button (typically Back).
+        label = entry.get("label")
+        if not label:
+            print(f"[config] {here}: not a page/group and no 'label' - skipped")
+            continue
+        action = _resolve_action(entry, f"{here} ({label})")
+        if action is None:
+            continue
+        own_cond = _compile_condition(entry.get("when"), f"{here} ({label})")
+        item = (label, own_cond)
+        loose.append(item)
+        acts[label] = action
+
+    if pages:
+        # Explicit pages: keep Back (and any other nav) as top-level entries only.
+        for label, cond in loose:
+            entries.append((label, cond))
+            if label != PAGE_BACK:
+                print(f"[config] {where}: loose button {label!r} with labeled "
+                      f"pages - shown on the index only via entries; prefer Back "
+                      f"or put it inside a page")
+        return entries, acts, pages
+
+    # Fully flat menu - loose holds everything.
+    return loose, acts, None
 
 
 def menu_exists(menu: str) -> bool:
@@ -519,18 +580,64 @@ def _menu_visible(menu: str, ctx=None):
 
 
 def _menu_chunks(menu: str, ctx=None):
-    """Content chunks for a paged menu, or None if everything fits on one screen."""
+    """Content chunks for a paged menu, or None if everything fits on one screen.
+
+    Returns (chunks, content, backs, size, titles).
+      * chunks is None → flat (no index)
+      * titles is None → auto summaries from chunk contents
+      * titles is a list → explicit page-group labels (same length as chunks)
+    """
+    ctx = ctx or {}
+    m = MENUS.get(str(menu))
+    if m is None:
+        return None, [], [], 9, None
+
+    size = max(1, m["page_size"])
+    backs = [label for label, cond in m["entries"]
+             if _is_parent_back(menu, label) and (cond is None or cond(ctx))]
+
+    if m.get("pages"):
+        chunks, titles = [], []
+        for page in m["pages"]:
+            labels = [label for label, cond in page["entries"]
+                      if cond is None or cond(ctx)]
+            if not labels:
+                continue
+            # Leaf must leave one slot for PAGE_BACK; trim with a warning if needed.
+            per = max(1, size - 1)
+            if len(labels) > per:
+                print(f"[config] menu {menu!r} page {page['title']!r}: "
+                      f"{len(labels)} buttons > {per} (page_size {size} - Back) "
+                      f"- truncating")
+                labels = labels[:per]
+            chunks.append(labels)
+            titles.append(page["title"])
+        if not chunks:
+            return None, [], backs, size, None
+        if len(chunks) == 1 and len(chunks[0]) + len(backs) <= size:
+            # Single explicit page that fits with Back → show flat (no index).
+            return None, chunks[0], backs, size, None
+        content = [label for chunk in chunks for label in chunk]
+        return chunks, content, backs, size, titles
+
     content, backs, size = _menu_visible(menu, ctx)
-    # Flat when content + parent Back(s) fit with no need to reserve a leaf Back slot.
     if len(content) + len(backs) <= size:
-        return None, content, backs, size
-    per = max(1, size - 1)          # one slot on each leaf for PAGE_BACK → index
+        return None, content, backs, size, None
+    per = max(1, size - 1)
     chunks = [content[i:i + per] for i in range(0, len(content), per)]
-    return chunks, content, backs, size
+    return chunks, content, backs, size, None
 
 
-def _unique_summaries(chunks):
-    """Build index labels; disambiguate collisions with a numeric suffix."""
+def _unique_summaries(chunks, titles=None):
+    """Build index labels; use explicit titles when provided."""
+    if titles is not None:
+        summaries, seen = [], {}
+        for title in titles:
+            base = _short(title)
+            n = seen.get(base, 0)
+            seen[base] = n + 1
+            summaries.append(base if n == 0 else f"{base} ({n + 1})")
+        return summaries
     summaries, seen = [], {}
     for chunk in chunks:
         base = _summarize_chunk(chunk)
@@ -542,7 +649,7 @@ def _unique_summaries(chunks):
 
 def menu_start_page(menu: str = "", ctx=None) -> int:
     """Page to show when entering a menu: index if it pages, else 0."""
-    chunks, _, _, _ = _menu_chunks(menu, ctx)
+    chunks, _, _, _, _ = _menu_chunks(menu, ctx)
     return PAGE_INDEX if chunks else 0
 
 
@@ -554,17 +661,14 @@ def menu_labels(menu: str = "", page: int = 0, ctx=None):
       * total_leaf_pages  > 1 → page PAGE_INDEX is the group index; page 0..N-1
         are leaves (each ending with PAGE_BACK)
     """
-    chunks, content, backs, size = _menu_chunks(menu, ctx)
+    chunks, content, backs, size, titles = _menu_chunks(menu, ctx)
     if chunks is None:
         return content + backs, 0, 1
 
     total = len(chunks)
-    summaries = _unique_summaries(chunks)
+    summaries = _unique_summaries(chunks, titles)
 
     if page == PAGE_INDEX or page < 0:
-        # Index: group labels, then parent Back. If the index itself overflows
-        # (rare; > ~8 groups), keep the first size-len(backs) groups — still
-        # better than linear Prev/Next through every leaf.
         budget = max(0, size - len(backs))
         labels = summaries[:budget] + backs
         return labels, PAGE_INDEX, total
@@ -575,10 +679,10 @@ def menu_labels(menu: str = "", page: int = 0, ctx=None):
 
 def menu_index_target(menu: str, label: str, ctx=None):
     """If `label` is an index group for this menu, return its leaf page; else None."""
-    chunks, _, _, _ = _menu_chunks(menu, ctx)
+    chunks, _, _, _, titles = _menu_chunks(menu, ctx)
     if not chunks:
         return None
-    summaries = _unique_summaries(chunks)
+    summaries = _unique_summaries(chunks, titles)
     try:
         return summaries.index(label)
     except ValueError:
@@ -603,7 +707,7 @@ try:
         MENUS = _load_menus(json.load(_f))
 except Exception:  # noqa: BLE001 - _load_config already reported the problem
     MENUS = {"": {"entries": QUICK_REPLY_ENTRIES, "actions": QUICK_REPLY_ACTIONS,
-                  "page_size": DEFAULT_PAGE_SIZE}}
+                  "page_size": DEFAULT_PAGE_SIZE, "pages": None}}
 
 
 def current_quick_replies(ctx=None):
