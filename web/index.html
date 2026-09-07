@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Galaxy Fit 3 · Web</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">⌚</span>
+      <div>
+        <h1>Galaxy Fit 3</h1>
+        <p class="sub">browser SAP client · Web Bluetooth</p>
+      </div>
+    </div>
+    <div class="conn">
+      <span id="connPill" class="pill pill-idle">offline</span>
+      <button id="btnConnect" class="btn btn-primary">Connect</button>
+      <button id="btnDisconnect" class="btn btn-ghost" disabled>Disconnect</button>
+    </div>
+  </header>
+
+  <div id="supportBanner" class="banner banner-warn hidden">
+    Web Bluetooth is not available here. You need a Chromium browser (Chrome/Edge) on a
+    <b>secure</b> context — i.e. served over <code>https://</code> (GitHub Pages) or
+    <code>localhost</code>.
+  </div>
+  <div id="hintBanner" class="banner banner-info hidden"></div>
+
+  <main class="grid">
+    <!-- Device / battery -->
+    <section class="card" id="cardDevice">
+      <h2>Device &amp; battery</h2>
+      <dl class="meta">
+        <div><dt>Connection</dt><dd id="metaConn">—</dd></div>
+        <div><dt>Handshake</dt><dd id="metaHandshake">—</dd></div>
+        <div><dt>Model</dt><dd id="metaModel">—</dd></div>
+      </dl>
+      <div class="battery">
+        <div class="battery-gauge"><div id="batteryFill" class="battery-fill"></div></div>
+        <div class="battery-text">
+          <span id="batteryLabel">—</span>
+          <span id="chargingLabel" class="dim"></span>
+        </div>
+        <button id="btnRefreshBattery" class="btn btn-ghost" disabled>Refresh</button>
+      </div>
+      <label class="row-inline">
+        <input type="checkbox" id="autoPoll" checked>
+        Poll battery every 10s while connected
+      </label>
+      <p class="note" id="connectNote">
+        The band only advertises while it is <b>discoverable</b>. If it is bonded to a
+        phone or PC it stops advertising, and a browser cannot connect by address the way
+        the Python tool does. To use this page, make the band advertise (e.g. drop the
+        phone connection / put it in pairing) and pick it in the chooser.
+      </p>
+    </section>
+
+    <!-- Media -->
+    <section class="card" id="cardMedia">
+      <h2>Now playing <span class="tag" id="mediaStateTag">stopped</span></h2>
+      <p class="note">This page hosts a small media session and reports it to the band.
+        Band play/pause / next / previous and volume then drive the page. Add an audio
+        file/URL to get real progress; otherwise play/pause is simulated.</p>
+      <div class="fields">
+        <label>Title <input id="mediaTitle" type="text" placeholder="Song title"></label>
+        <label>Artist <input id="mediaArtist" type="text" placeholder="Artist"></label>
+      </div>
+      <div class="fields">
+        <label>Audio URL
+          <input id="mediaUrl" type="text" placeholder="https://…/audio.mp3">
+        </label>
+        <label class="file">Audio file
+          <input id="mediaFile" type="file" accept="audio/*,video/*">
+        </label>
+      </div>
+      <div class="btn-row">
+        <button id="btnPrev" class="btn btn-ghost" title="previous">⏮</button>
+        <button id="btnPlayPause" class="btn btn-ghost" title="play/pause">⏯</button>
+        <button id="btnNext" class="btn btn-ghost" title="next">⏭</button>
+        <span class="spacer"></span>
+        <button id="btnPushNowPlaying" class="btn btn-ghost">Push to band</button>
+      </div>
+      <div class="mini">
+        <div id="mediaPos" class="dim">00:00 / 00:00</div>
+        <label class="row-inline">Volume <input id="mediaVol" type="range" min="0" max="15" value="8"></label>
+      </div>
+      <audio id="audioEl" style="display:none"></audio>
+    </section>
+
+    <!-- Notifications -->
+    <section class="card" id="cardNotify">
+      <h2>Push a notification</h2>
+      <div class="fields">
+        <label>Title <input id="notiTitle" type="text" placeholder="Hello from the web"></label>
+        <label>App name <input id="notiApp" type="text" value="Web" placeholder="App name"></label>
+      </div>
+      <label>Body <textarea id="notiBody" rows="2" placeholder="Optional body text"></textarea></label>
+      <div class="fields">
+        <label class="file">Icon image
+          <input id="notiIcon" type="file" accept="image/*">
+        </label>
+        <div id="notiIconPreview" class="iconpreview"></div>
+      </div>
+      <label class="row-inline">
+        <input type="checkbox" id="notiQuickReply">
+        Show quick-reply buttons (list below) on this notification
+      </label>
+      <label>Quick-reply buttons (comma separated)
+        <input id="quickReplies" type="text" value="OK,Done,More info" placeholder="OK, Done, More info">
+      </label>
+      <div class="btn-row">
+        <button id="btnSendNoti" class="btn btn-primary" disabled>Send to wrist</button>
+        <label class="row-inline dim">
+          <input type="checkbox" id="notiAlert"> buzz
+        </label>
+        <label class="row-inline dim">
+          <input type="checkbox" id="notiPopup" checked> popup
+        </label>
+      </div>
+      <p class="note">Tapping a quick-reply button on the band sends its text back here
+        (shown below). Popups/buzz follow <code>ALERT_TYPE</code>; the notification icon is
+        requested and served at 52/112&nbsp;px.</p>
+      <div id="replyLog" class="replylog"></div>
+    </section>
+
+    <!-- Watchfaces -->
+    <section class="card" id="cardFaces">
+      <h2>Watchfaces</h2>
+      <div class="btn-row">
+        <button id="btnListFaces" class="btn btn-ghost" disabled>List faces</button>
+        <button id="btnActiveFace" class="btn btn-ghost" disabled>Active face</button>
+        <span id="faceStatus" class="dim"></span>
+      </div>
+      <ul id="faceList" class="face-list"></ul>
+      <p class="note">List / switch the active watchface. Installing new <code>.bin</code>
+        faces needs the SAFT bulk-file transport, which has no BLE route (same as the
+        Python server) — so install is not offered here.</p>
+    </section>
+
+    <!-- Weather -->
+    <section class="card" id="cardWeather">
+      <h2>Weather <span class="tag">best-effort</span></h2>
+      <p class="note">Fetches a short Open-Meteo forecast (free, no key) and pushes it to
+        the band's weather widget. Location via the browser, or enter coordinates.</p>
+      <div class="fields">
+        <label>Lat <input id="wxLat" type="text" placeholder="51.5072"></label>
+        <label>Lon <input id="wxLon" type="text" placeholder="-0.1276"></label>
+      </div>
+      <div class="fields">
+        <label>City label <input id="wxCity" type="text" value="My area" placeholder="My area"></label>
+        <label class="file">Use my location
+          <button id="btnWxLocate" class="btn btn-ghost" type="button">📍</button>
+        </label>
+      </div>
+      <div class="btn-row">
+        <button id="btnSendWeather" class="btn btn-ghost" disabled>Fetch &amp; push</button>
+        <span id="wxStatus" class="dim"></span>
+      </div>
+    </section>
+  </main>
+
+  <footer class="logbar">
+    <div class="loghead">
+      <span>Protocol log</span>
+      <span class="spacer"></span>
+      <button id="btnClearLog" class="btn btn-ghost btn-sm">Clear</button>
+    </div>
+    <pre id="log" class="log"></pre>
+  </footer>
+</div>
+
+<script src="js/sap.js"></script>
+<script src="js/link.js"></script>
+<script src="js/icons.js"></script>
+<script src="js/features.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

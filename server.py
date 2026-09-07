@@ -15,6 +15,7 @@ Ctrl+C to stop.
 """
 
 import asyncio
+import os
 import re
 import subprocess
 import sys
@@ -56,6 +57,7 @@ PHONE_VENDOR = "Xiaomi"
 POLL_SECONDS = 10
 NOTI_POLL_SECONDS = 2       # how often to check Windows for new toasts
 RECONNECT_SECONDS = 5
+CONFIG_RELOAD_POLL = 1.0    # how often to check config.json for edits
 # Pause between big-data chunks. Pacing was never the fix for the big-icon nack
 # (the SAP-fragmentation chunk cap was), and it costs real time on every frame -
 # so it's off. Raise it only if transfers start nacking.
@@ -1179,15 +1181,47 @@ class Fit3Server:
             if self._launcher_task is not None and not self._launcher_task.done():
                 self._launcher_task.cancel()   # don't re-arm onto a dead link
 
-    async def run(self) -> int:
-        print(f"[{ts()}] Fit 3 server starting (capture={self.capture}). Ctrl+C to stop.")
+    async def _watch_config(self):
+        """Hot-reload config.json when its mtime changes."""
+        path = actions_mod.CONFIG_PATH
+        mtime = None
         while True:
             try:
-                await self._serve_once()
-            except Exception as e:  # noqa: BLE001
-                print(f"[{ts()}] connection error: {e}")
-            print(f"[{ts()}] reconnecting in {RECONNECT_SECONDS}s...\n")
-            await asyncio.sleep(RECONNECT_SECONDS)
+                mtime = os.path.getmtime(path)
+                break
+            except OSError:
+                pass
+            await asyncio.sleep(CONFIG_RELOAD_POLL)
+        while True:
+            await asyncio.sleep(CONFIG_RELOAD_POLL)
+            try:
+                new_mtime = os.path.getmtime(path)
+            except OSError:
+                continue
+            if new_mtime == mtime:
+                continue
+            mtime = new_mtime
+            if not actions_mod.reload_config():
+                print(f"[{ts()}] config reload skipped (invalid or missing file)")
+                continue
+            print(f"[{ts()}] config reloaded")
+            self._last_labels = None
+            if self.handshake_done and self.launcher:
+                await self.send_launcher("config reload")
+
+    async def run(self) -> int:
+        print(f"[{ts()}] Fit 3 server starting (capture={self.capture}). Ctrl+C to stop.")
+        config_task = asyncio.ensure_future(self._watch_config())
+        try:
+            while True:
+                try:
+                    await self._serve_once()
+                except Exception as e:  # noqa: BLE001
+                    print(f"[{ts()}] connection error: {e}")
+                print(f"[{ts()}] reconnecting in {RECONNECT_SECONDS}s...\n")
+                await asyncio.sleep(RECONNECT_SECONDS)
+        finally:
+            config_task.cancel()
 
 
 def _opt(args, name, default=None):

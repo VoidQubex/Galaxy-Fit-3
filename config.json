@@ -558,6 +558,16 @@
           }
         },
         {
+          "label": "Alt + F4",
+          "run": "key",
+          "args": {
+            "key": "f4",
+            "mods": [
+              "alt"
+            ]
+          }
+        },
+        {
           "label": "Back",
           "menu": ""
         }

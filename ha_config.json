@@ -1,10 +1,10 @@
 {
   "url": "http://pi.local:8123",
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI3ZjllNmU1MzBiMTE0MzBjOWViMDVmNTEwNzk5YTVkNiIsImlhdCI6MTc4NDMwMTQyMywiZXhwIjoyMDk5NjYxNDIzfQ.x0fdI9Mv6BftQ_Fkhk00Lv8x94xVGTv40cwWKKEpQKs",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiI4YzFmYmJjNDVlNmM0MTY5OTc0MDU2MDdjZDNkZWQ5ZCIsImlhdCI6MTc4ODUxMDM4MSwiZXhwIjoyMTAzODcwMzgxfQ.O4l_R1CPG4RbnfMOf5tZoBpLk-9jBnbICceHKMd9htU",
   "title": "Home",
   "entities": [
-    { "entity_id": "sensor.foxess_bat_soc",          "label": "Battery" },
-    { "entity_id": "sensor.foxess_load_power",       "label": "Load" },
-    { "entity_id": "sensor.foxess_energy_generated", "label": "Generated" }
+    { "entity_id": "sensor.foxess_battery_soc",            "label": "Battery" },
+    { "entity_id": "sensor.foxess_house_load",             "label": "Load" },
+    { "entity_id": "sensor.foxess_solar_generation_energy","label": "Generated" }
   ]
 }

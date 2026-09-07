@@ -13,10 +13,17 @@ Stdlib only (urllib) - no extra dependencies.
 
 import json
 import os
+import socket
+import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
 _CONFIG_PATH = os.path.join(os.path.dirname(__file__), "ha_config.json")
+
+# Last successful IPv4 rewrite for a hostname. mDNS (.local) is flaky on
+# Windows; caching avoids three separate DNS lookups for three entities.
+_IPV4_CACHE: dict[str, str] = {}
 
 
 def _load_config() -> dict:
@@ -35,14 +42,64 @@ def _load_config() -> dict:
     return cfg
 
 
+def _prefer_ipv4_url(url: str, retries: int = 3) -> str:
+    """Rewrite host to an IPv4 literal when DNS is flaky (common with .local).
+
+    mDNS often returns an IPv6 link-local address first; urllib then fails with
+    getaddrinfo / unreachable. Prefer a plain IPv4 address when available, and
+    reuse a cached rewrite so a multi-entity fetch doesn't re-resolve thrice.
+    """
+    parts = urllib.parse.urlsplit(url)
+    host = parts.hostname
+    if not host or host[0].isdigit() or ":" in host:
+        return url
+    cached = _IPV4_CACHE.get(host)
+    if cached:
+        return cached
+    infos = []
+    for attempt in range(retries):
+        try:
+            infos = socket.getaddrinfo(host, parts.port or 80, socket.AF_INET,
+                                       socket.SOCK_STREAM)
+            if infos:
+                break
+        except OSError:
+            if attempt + 1 < retries:
+                time.sleep(0.3)
+    if not infos:
+        return url
+    ip = infos[0][4][0]
+    netloc = f"{ip}:{parts.port}" if parts.port else ip
+    rewritten = urllib.parse.urlunsplit(
+        (parts.scheme, netloc, parts.path, parts.query, parts.fragment))
+    _IPV4_CACHE[host] = rewritten
+    return rewritten
+
+
 def get_state(entity_id: str, url: str, token: str, timeout: float = 8.0) -> dict:
     """Raw state dict for one entity (keys: state, attributes, ...)."""
-    req = urllib.request.Request(
-        f"{url}/api/states/{entity_id}",
-        headers={"Authorization": f"Bearer {token}",
-                 "Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return json.loads(r.read().decode("utf-8"))
+    parts = urllib.parse.urlsplit(url)
+    host_header = parts.netloc
+    last_err = None
+    for attempt in range(3):
+        base = _prefer_ipv4_url(url)
+        req = urllib.request.Request(
+            f"{base}/api/states/{entity_id}",
+            headers={"Authorization": f"Bearer {token}",
+                     "Content-Type": "application/json",
+                     "Host": host_header})
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return json.loads(r.read().decode("utf-8"))
+        except urllib.error.HTTPError:
+            raise
+        except Exception as e:  # noqa: BLE001 - retry transient DNS/connect flaps
+            last_err = e
+            # Drop a bad cache entry so the next attempt re-resolves.
+            if parts.hostname in _IPV4_CACHE:
+                del _IPV4_CACHE[parts.hostname]
+            time.sleep(0.3)
+    raise last_err
 
 
 def _format_entity(entity: dict, url: str, token: str) -> str:

@@ -236,7 +236,8 @@ def _launch(name: str):
 # Builds the four structures server.py consumes from config.json. One bad entry
 # is skipped with a warning; a missing/invalid file degrades to "no buttons".
 
-_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.json")
+CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.json")
+_CONFIG_PATH = CONFIG_PATH
 
 
 # ---- "when" conditions (context-sensitive quick replies) ----------------------
@@ -391,24 +392,27 @@ def _walk_quick_replies(entries, parent_cond, where, out_entries, out_actions):
         out_actions[label] = action
 
 
-def _load_config():
+def _read_config_file():
+    """Load and parse config.json. Returns None if missing or invalid."""
+    if not os.path.exists(_CONFIG_PATH):
+        print("[config] config.json not found - no buttons/actions loaded. "
+              "Copy config.example.json to config.json to configure.")
+        return None
+    try:
+        with open(_CONFIG_PATH, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:  # noqa: BLE001 - a bad file must not crash the server
+        print(f"[config] config.json is invalid ({e}) - no buttons/actions loaded.")
+        return None
+
+
+def _parse_actions_and_quick_replies(cfg):
     """Return (ACTIONS, QUICK_REPLY_ENTRIES, QUICK_REPLY_ACTIONS, DEBOUNCE).
 
     QUICK_REPLY_ENTRIES is a list of (label, condition) where condition is
     callable(ctx)->bool or None ("always show").
     """
     actions, quick_reply_entries, quick_reply_actions, debounce = {}, [], {}, {}
-
-    if not os.path.exists(_CONFIG_PATH):
-        print("[config] config.json not found - no buttons/actions loaded. "
-              "Copy config.example.json to config.json to configure.")
-        return actions, quick_reply_entries, quick_reply_actions, debounce
-    try:
-        with open(_CONFIG_PATH, encoding="utf-8") as f:
-            cfg = json.load(f)
-    except Exception as e:  # noqa: BLE001 - a bad file must not crash the server
-        print(f"[config] config.json is invalid ({e}) - no buttons/actions loaded.")
-        return actions, quick_reply_entries, quick_reply_actions, debounce
 
     # Quick-reply buttons - list/tree order is the button order on the band.
     # Entries may be plain buttons or `when` groups holding their own buttons.
@@ -434,6 +438,43 @@ def _load_config():
             debounce[key] = float(window)
 
     return actions, quick_reply_entries, quick_reply_actions, debounce
+
+
+def _load_config():
+    cfg = _read_config_file()
+    if cfg is None:
+        return {}, [], {}, {}
+    return _parse_actions_and_quick_replies(cfg)
+
+
+def _empty_menus():
+    return {"": {"entries": [], "actions": {}, "page_size": DEFAULT_PAGE_SIZE, "pages": None}}
+
+
+def _apply_config(cfg):
+    """Refresh module-level config structures from a parsed config dict."""
+    global ACTIONS, QUICK_REPLY_ENTRIES, QUICK_REPLY_ACTIONS, DEBOUNCE, QUICK_REPLIES, MENUS
+    if cfg is None:
+        ACTIONS, QUICK_REPLY_ENTRIES, QUICK_REPLY_ACTIONS, DEBOUNCE = {}, [], {}, {}
+        QUICK_REPLIES = []
+        MENUS = _empty_menus()
+        return
+    ACTIONS, QUICK_REPLY_ENTRIES, QUICK_REPLY_ACTIONS, DEBOUNCE = _parse_actions_and_quick_replies(cfg)
+    QUICK_REPLIES = [label for label, _ in QUICK_REPLY_ENTRIES]
+    MENUS = _load_menus(cfg)
+
+
+def reload_config():
+    """Re-read config.json and refresh module-level structures in place.
+
+    Returns True on success. On a missing/invalid file, leaves the previous
+    config in place and returns False.
+    """
+    cfg = _read_config_file()
+    if cfg is None:
+        return False
+    _apply_config(cfg)
+    return True
 
 
 # ---- menus & paging -----------------------------------------------------------
@@ -697,17 +738,16 @@ def menu_action(menu: str, label: str):
     return m["actions"].get(label)
 
 
-# Built at import. server.py reads ACTIONS / QUICK_REPLIES / QUICK_REPLY_ACTIONS /
-# DEBOUNCE, plus menu_labels()/menu_action() for the menu-aware button list.
-ACTIONS, QUICK_REPLY_ENTRIES, QUICK_REPLY_ACTIONS, DEBOUNCE = _load_config()
-QUICK_REPLIES = [label for label, _ in QUICK_REPLY_ENTRIES]   # all root labels
-
-try:
-    with open(_CONFIG_PATH, encoding="utf-8") as _f:
-        MENUS = _load_menus(json.load(_f))
-except Exception:  # noqa: BLE001 - _load_config already reported the problem
-    MENUS = {"": {"entries": QUICK_REPLY_ENTRIES, "actions": QUICK_REPLY_ACTIONS,
-                  "page_size": DEFAULT_PAGE_SIZE, "pages": None}}
+# Built at import; call reload_config() to hot-swap after editing config.json.
+# server.py reads ACTIONS / QUICK_REPLIES / QUICK_REPLY_ACTIONS / DEBOUNCE,
+# plus menu_labels()/menu_action() for the menu-aware button list.
+ACTIONS = {}
+QUICK_REPLY_ENTRIES = []
+QUICK_REPLY_ACTIONS = {}
+DEBOUNCE = {}
+QUICK_REPLIES = []
+MENUS = _empty_menus()
+_apply_config(_read_config_file())
 
 
 def current_quick_replies(ctx=None):

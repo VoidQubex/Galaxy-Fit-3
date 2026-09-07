@@ -3,6 +3,14 @@
 Connect a Samsung Galaxy Fit 3 to a Windows PC over Bluetooth LE, without a phone
 or the Galaxy Wearable app. Speaks Samsung's Accessory Protocol (SAP) directly.
 
+> **Browser client** — there's also a static **GitHub Pages** app in [`web/`](web/)
+> that re-implements SAP over **Web Bluetooth** (no Python, no server): scan/connect
+> in Chrome, battery, a browser-hosted media remote, push notifications with icons,
+> watchface list/switch, and a best-effort weather push. Windows-only features
+> (volume, toasts, SendInput, Home Assistant) have no browser equivalent and are
+> omitted. See [`web/README.md`](web/README.md). **Not yet validated on a physical
+> band.**
+
 ## What works
 
 | Feature | Status |
