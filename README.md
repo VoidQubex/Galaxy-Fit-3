@@ -1,3 +1,9 @@
+A Galaxy Fit 3 connector for PC, in Python.
+
+> (Mostly vibe coded cuz I couldn't be bothered to do this all from scratch)
+> There are a ton of random and useless features so here is Claude and DeekSeek cooperating to make a huge README cuz once again I couldn't be bothered
+
+
 # Galaxy Fit 3 — PC server
 
 Connect a Samsung Galaxy Fit 3 to a Windows PC over Bluetooth LE, without a phone
